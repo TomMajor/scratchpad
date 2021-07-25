@@ -162,7 +162,7 @@ public:
 class WeatherEventMsg : public Message {
 public:
     void init(uint8_t msgcnt, int16_t temp, uint16_t airPressure, uint8_t humidity, uint32_t brightness, uint8_t digInputState,
-              uint16_t batteryVoltage, bool batLow, uint16_t absHumidity, int16_t dewPoint, uint8_t uvI)
+              uint16_t batteryVoltage, bool batLow, uint16_t absHumidity, int16_t dewPoint, uint8_t uvI, uint16_t uvA, uint16_t uvB)
     {
 
         uint8_t t1 = (temp >> 8) & 0x7f;
@@ -178,11 +178,11 @@ public:
         if ((msgcnt % 20) == 2) {
             flags = BIDI | WKMEUP;
         }
-        Message::init(23, msgcnt, 0x70, flags, t1, t2);
+        Message::init(26, msgcnt, 0x70, flags, t1, t2);
 
         // Message Length (first byte param.): 11 + payload
         //  1 Byte payload -> length 12
-        // 12 Byte payload -> length 23
+        // 15 Byte payload -> length 26
         // max. payload: 17 Bytes (https://www.youtube.com/watch?v=uAyzimU60jw)
 
         // BIDI|WKMEUP: erwartet ACK vom Empfänger, ohne ACK wird das Senden wiederholt
@@ -231,9 +231,12 @@ public:
         // pload[12] = (dewPoint >> 8) & 0xff;
         // pload[13] = dewPoint & 0xff;
 
-        // UV-Index
+        // UV-Index, UVA/B raw
         pload[10] = uvI;
-        pload[11] = 0;
+        pload[11] = (uvA >> 8) & 0xff;
+        pload[12] = uvA & 0xff;
+        pload[13] = (uvB >> 8) & 0xff;
+        pload[14] = uvB & 0xff;
     }
 };
 
@@ -308,6 +311,7 @@ class WeatherChannel : public Channel<Hal, List1, EmptyList, List4, PEERS_PER_CH
     uint16_t absHumidity100;
     int16_t  dewPoint10;
     uint8_t  uvI;
+    uint16_t uvA, uvB;
 
 #ifdef SENSOR_DS18X20
     OneWire      oneWire;
@@ -360,6 +364,8 @@ public:
         , absHumidity100(0)
         , dewPoint10(0)
         , uvI(0)
+        , uvA(0)
+        , uvB(0)
 #ifdef SENSOR_DS18X20
         , oneWire(ONEWIRE_PIN)
         , ds18x20Count(0)
@@ -377,7 +383,7 @@ public:
         uint8_t msgcnt   = device().nextcount();
         uint8_t humidity = (uint8_t)((humidity10 + 5) / 10);    // rounding
         msg.init(msgcnt, temperature10, airPressure10, humidity, brightness100, digInputState, batteryVoltage, device().battery().low(),
-                 absHumidity100, dewPoint10, uvI);
+                 absHumidity100, dewPoint10, uvI, uvA, uvB);
         if (msg.flags() & Message::BCAST) {
             device().broadcastEvent(msg, *this);
         } else {
@@ -489,8 +495,10 @@ public:
 
 #ifdef SENSOR_VEML6075
         veml6075.measure();
-        // Beispiel custom payload, 8bit für UV-Index * 10 (integer 0..110, 1 Kommastelle)
-        uvI = veml6075.uvIndex10();
+        // Beispiel custom payload, 8bit für UV-Index * 10 (integer 0..255, 1 Kommastelle)
+        uvI = veml6075.uvI10();
+        uvA = veml6075.uvA();
+        uvB = veml6075.uvB();
 #endif
 
         // bei Bedarf die Batteriespannung vor der Übertragung neu messen mittels update()

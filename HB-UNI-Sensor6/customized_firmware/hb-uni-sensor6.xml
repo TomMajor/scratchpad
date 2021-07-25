@@ -120,11 +120,23 @@
           <conversion type="float_integer_scale" factor="1000.0" />
         </parameter>
         <parameter id="UV-Index" operations="read,event">
-          <logical type="float" min="0" max="12" />
+          <logical type="float" min="0" max="25" />
           <physical type="integer" interface="command" value_id="UV-Index">
             <event frame="WEATHER_EVENT" />
           </physical>
           <conversion type="float_integer_scale" factor="10.0" />
+        </parameter>
+        <parameter id="UV_A" operations="read,event">
+          <logical type="integer" min="0" max="65535" unit="" />
+          <physical type="integer" interface="command" value_id="UV_A">
+            <event frame="WEATHER_EVENT" />
+          </physical>
+        </parameter>
+        <parameter id="UV_B" operations="read,event">
+          <logical type="integer" min="0" max="65535" unit="" />
+          <physical type="integer" interface="command" value_id="UV_B">
+            <event frame="WEATHER_EVENT" />
+          </physical>
         </parameter>
       </paramset>  
       <paramset type="LINK" id="HB-UNI-Sensor6_link"></paramset>
@@ -138,6 +150,8 @@
       <parameter type="integer" index="14" size="4.0" param="LUX" />
       <parameter type="integer" index="19" size="2.0" param="OPERATING_VOLTAGE" />
       <parameter type="integer" index="21" size="1.0" param="UV-Index" />
+      <parameter type="integer" index="22" size="2.0" param="UV_A" />
+      <parameter type="integer" index="24" size="2.0" param="UV_B" />
     </frame>
   </frames>
   <paramset_defs></paramset_defs>

@@ -20,7 +20,6 @@ namespace as {
 
 class Sens_VEML6075 : public Sensor {
 
-    uint8_t  _uvIndex10;
     float    _uva, _uvb, _uvi;
     VEML6075 _veml6075;
 
@@ -35,10 +34,9 @@ class Sens_VEML6075 : public Sensor {
 
 public:
     Sens_VEML6075()
-        : _uvIndex10(0)
-        , _uva(0)
-        , _uvb(0)
-        , _uvi(0)
+        : _uva(0.0)
+        , _uvb(0.0)
+        , _uvi(0.0)
     {
     }
 
@@ -62,17 +60,15 @@ public:
 
     bool measure()
     {
-        _uvIndex10 = 0;
-        _uva = _uvb = _uvi = 0;
+        _uva = _uvb = _uvi = 0.0;
         if (_present == true) {
             writeConf(0x10);     // integration time 100ms, device on
             delay(150);          // allow one measurement
             _veml6075.poll();    // poll sensor
-            _uva       = _veml6075.getUVA();
-            _uvb       = _veml6075.getUVB();
-            _uvi       = _veml6075.getUVIndex();
-            _uvIndex10 = uint8_t(floor(_uvi * 10.0 + 0.5));    // scaling and rounding
-            writeConf(0x11);                                   // integration time 100ms, device shut down
+            _uva = _veml6075.getUVA();
+            _uvb = _veml6075.getUVB();
+            _uvi = _veml6075.getUVIndex();
+            writeConf(0x11);    // integration time 100ms, device shut down
 
 #ifndef NDEBUG
             DPRINT(F("VEML6075 UVA            : "));
@@ -87,9 +83,9 @@ public:
         return false;
     }
 
-    uint8_t uvIndex10() { return _uvIndex10; }
-    float   uvA() { return _uva; }
-    float   uvB() { return _uvb; }
+    uint8_t  uvI10() { return uint8_t(floor(_uvi * 10.0 + 0.5)); }    // scaling and rounding
+    uint16_t uvA() { return (uint16_t)_uva; }
+    uint16_t uvB() { return (uint16_t)_uvb; }
 };
 
 }
